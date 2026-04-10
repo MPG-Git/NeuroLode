@@ -5,6 +5,11 @@ function vers = eegplugin_Neurolode(fig, try_strings, catch_strings)
 % Author: Matthew Phillip Gunn (Carbondale, IL), updated 2025-08-13
 
 vers = '1.7.0';
+
+% Bootstrap internal subfolder paths (safe no-op if folders are absent).
+if exist('neurolode_addpath','file') == 2
+    neurolode_addpath(fileparts(mfilename('fullpath')));
+end
 if nargin < 1 || isempty(fig), return; end
 
 % Reuse existing menu if already present (avoid duplicates on rehash)

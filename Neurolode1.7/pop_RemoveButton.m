@@ -37,26 +37,45 @@
 % THE POSSIBILITY OF SUCH DAMAGE.
 
 function pop_RemoveButton(gca,gco)
-    TagName = get(gco,'tag');    
+    if nargin < 2 || isempty(gca) || isempty(gco) || ~ishandle(gca) || ~ishandle(gco)
+        warning('AutoBatch:RemoveButtonInvalidHandle', 'Invalid GUI handles. Remove ignored.');
+        return;
+    end
+    TagName = get(gco,'tag');
     userdata = get(get(gca,'Parent'),'userdata');
+    if ~isstruct(userdata) || ~isfield(userdata,'OrderName') || ~isfield(userdata,'OrderNum') || isempty(userdata.OrderName)
+        warning('AutoBatch:RemoveButtonMissingState', 'AutoBatch state missing. Remove ignored.');
+        return;
+    end
     NewOrderName = userdata.OrderName;
     NewOrderNum = userdata.OrderNum;
     MapPOS = zeros(size(NewOrderName,1),4);    
     if userdata.UpDownButtonRun == 0
         for i=1:size(NewOrderName,1)
             h = findobj('Tag',NewOrderName{i,1});
+            if isempty(h), continue; end
             MapPOS(i,1:end) = h(1,1:end).Position;
         end
     else
+        if ~isfield(userdata,'POS') || isempty(userdata.POS)
+            warning('AutoBatch:RemoveButtonMissingPositions', 'Position map missing. Remove ignored.');
+            return;
+        end
         MapPOS = userdata.POS;
     end    
-    idx = userdata.OrderNum(strcmp(vertcat(userdata.OrderName{:}),TagName),1);   
+    idx = userdata.OrderNum(strcmp(vertcat(userdata.OrderName{:}),TagName),1);
+    if isempty(idx)
+        warning('AutoBatch:RemoveButtonTagNotFound', 'Button tag not found in order list. Remove ignored.');
+        return;
+    end
     Ori = find(vertcat(userdata.OrderNum{:}) == idx{:});
+    if isempty(Ori), return; end
     OriO = vertcat(userdata.OrderNum{:});
     
     OriRem = vertcat(NewOrderName(Ori,:));
     for i=1:size(Ori,1)
-        delete(findobj('tag', OriRem{i,1}));
+        h = findobj('tag', OriRem{i,1});
+        if ~isempty(h), delete(h); end
     end
    
      for i=Ori(1,1):size(OriO,1)
@@ -69,10 +88,14 @@ function pop_RemoveButton(gca,gco)
     MapPOS((1+end)-size(Ori,1):end,:) = [];
     
     %userdata.Operation = string(userdata.Operation{:});
-    userdata.Operation(idx{:},:) = [];
+    if isfield(userdata,'Operation') && numel(userdata.Operation) >= idx{:}
+        userdata.Operation(idx{:},:) = [];
+    end
     
     for i=1:size(MapPOS,1)
-        set(findobj('tag', NewOrderName{i,1}),'position', MapPOS(i,:));
+        h = findobj('tag', NewOrderName{i,1});
+        if isempty(h), continue; end
+        set(h,'position', MapPOS(i,:));
     end    
     userdata.OrderName = NewOrderName;    
     userdata.OrderNum = NewOrderNum;

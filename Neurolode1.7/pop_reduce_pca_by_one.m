@@ -1,6 +1,11 @@
 function [EEG, com] = pop_reduce_pca_by_one(EEG)
-% [EEG, com] = pop_reduce_pca_by_one(EEG)
-% Reduce ICA dimensionality by 1 and re-run ICA using BINICA (if available)
+% pop_reduce_pca_by_one  Reduce ICA PCA dimensionality by one component.
+%
+% Usage:
+%   >> [EEG, com] = pop_reduce_pca_by_one(EEG);
+%
+% Notes:
+% - Re-runs ICA using BINICA (if available)
 % or RUNICA, with PCA pre-reduction to N-1.
 %
 % - Detects current number of ICs from EEG.icaweights when available.
@@ -11,8 +16,9 @@ function [EEG, com] = pop_reduce_pca_by_one(EEG)
 
 com = '';
 
-if nargin < 1 || isempty(EEG)
-    error('pop_reduce_pca_by_one: EEG dataset is required.');
+neurolode_preproc_common('validate_eeg_input', EEG, 'pop_reduce_pca_by_one');
+if ~isfield(EEG,'nbchan') || isempty(EEG.nbchan)
+    error('pop_reduce_pca_by_one: EEG.nbchan is required.');
 end
 
 % --- Determine current dimensionality N ---

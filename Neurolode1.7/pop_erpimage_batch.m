@@ -1,4 +1,5 @@
 % pop_erpimage_batch.m - Batch ERP Image Plugin with Averaging, Contrast, and Permutation Test
+% STATUS: Supported batch ERP-image entrypoint (compatibility/secondary path).
 function pop_erpimage_batch(EEG, compList, eventTypeList, varargin)
 
 if nargin < 1 || isempty(EEG)

@@ -37,24 +37,44 @@
 % THE POSSIBILITY OF SUCH DAMAGE.
 
 function pop_MoveButton(gca,gco)
-    TagName = get(gco,'tag');    
+    if nargin < 2 || isempty(gca) || isempty(gco) || ~ishandle(gca) || ~ishandle(gco)
+        warning('AutoBatch:MoveButtonInvalidHandle', 'Invalid GUI handles. Move ignored.');
+        return;
+    end
+    TagName = get(gco,'tag');
     userdata = get(get(gca,'Parent'),'userdata');
+    if ~isstruct(userdata) || ~isfield(userdata,'OrderName') || ~isfield(userdata,'OrderNum') || isempty(userdata.OrderName)
+        warning('AutoBatch:MoveButtonMissingState', 'AutoBatch state missing. Move ignored.');
+        return;
+    end
+
     NewOrderName = userdata.OrderName;
     NewOrderNum = userdata.OrderNum;
-    MapPOS = zeros(size(NewOrderName,1),4);    
+    MapPOS = zeros(size(NewOrderName,1),4);
     if userdata.UpDownButtonRun == 0
         for i=1:size(NewOrderName,1)
             h = findobj('Tag',NewOrderName{i,1});
+            if isempty(h), continue; end
             MapPOS(i,1:end) = h(1,1:end).Position;
         end
     else
+        if ~isfield(userdata,'POS') || isempty(userdata.POS)
+            warning('AutoBatch:MoveButtonMissingPositions', 'Position map missing. Move ignored.');
+            return;
+        end
         MapPOS = userdata.POS;
-    end    
-    idx = userdata.OrderNum(strcmp(vertcat(userdata.OrderName{:}),TagName),1);   
+    end
+    idx = userdata.OrderNum(strcmp(vertcat(userdata.OrderName{:}),TagName),1);
+    if isempty(idx)
+        warning('AutoBatch:MoveButtonTagNotFound', 'Button tag not found in order list. Move ignored.');
+        return;
+    end
     if contains(TagName,'UpB')
         Move2Target = idx{:} - 1; %is it at top alrdy?
     elseif contains(TagName,'Dow')
         Move2Target = idx{:} + 1; %is it at bottom alrdy?
+    else
+        return;
     end
     if Move2Target > 0 && Move2Target < NewOrderNum{end,1}+1
         Ori = find(vertcat(userdata.OrderNum{:}) == idx{:});
@@ -65,7 +85,9 @@ function pop_MoveButton(gca,gco)
         end
     end
     for i=1:size(MapPOS,1)
-        set(findobj('tag', NewOrderName{i,1}),'position', MapPOS(i,:));
+        h = findobj('tag', NewOrderName{i,1});
+        if isempty(h), continue; end
+        set(h,'position', MapPOS(i,:));
     end    
     userdata.OrderName = NewOrderName;    
     userdata.OrderNum = userdata.OrderNum;

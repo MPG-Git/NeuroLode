@@ -1,8 +1,15 @@
 function [EEG, com] = convert2continuous(EEG)
-% convert2continuous  Flatten epoched EEG into a single continuous run.
+% convert2continuous  Convert epoched EEG into one continuous dataset.
 %
 % Usage:
 %   >> [EEG, com] = convert2continuous(EEG);
+%
+% Inputs:
+%   EEG : EEGLAB dataset struct.
+%
+% Outputs:
+%   EEG : Converted dataset (continuous).
+%   com : EEGLAB history command string.
 %
 % Notes:
 % - Event latencies are converted from (epoch, within-epoch) to continuous samples.
@@ -12,8 +19,9 @@ function [EEG, com] = convert2continuous(EEG)
 
 com = 'convert2continuous(EEG);';
 
-if nargin < 1 || isempty(EEG)
-    error('convert2continuous: EEG dataset is required.');
+neurolode_preproc_common('validate_eeg_input', EEG, 'convert2continuous');
+if ~isfield(EEG,'trials') || isempty(EEG.trials)
+    error('convert2continuous: EEG.trials is required.');
 end
 
 % Already continuous? No-op

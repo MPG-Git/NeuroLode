@@ -70,7 +70,7 @@ ovlSamp = round(OverlapFrames/1000*fs);
 assert(ovlSamp < winSamp, 'Overlap must be strictly less than window.');
 
 % ------------- channels -------------
-chanIdx = resolve_coi(COIraw, EEG);
+chanIdx = nl_spectral_common('resolve_coi', COIraw, EEG);
 if isempty(chanIdx), error('No valid channels resolved from "%s".', string(COIraw)); end
 
 % ------------- data (channels x time) -------------
@@ -106,7 +106,7 @@ if size(X,1) == 1
         c(f) = spectralCentroid(p(:).', cf(:).');  % returns scalar
     end
     C = c;
-    labels = { iff(AverageChannelsCheck, avg_label(chanIdx), chan_label(chanIdx(1), EEG)) };
+    labels = { nl_spectral_common('iff', AverageChannelsCheck, nl_spectral_common('avg_label', chanIdx), nl_spectral_common('chan_label', chanIdx(1), EEG)) };
 else
     nC = size(X,1);
     C = zeros(nC, nFrames);
@@ -120,9 +120,9 @@ else
     end
     if AverageChannelsCheck
         C = mean(C,1,'omitnan');
-        labels = { avg_label(chanIdx) };
+        labels = { nl_spectral_common('avg_label', chanIdx) };
     else
-        labels = arrayfun(@(ii) chan_label(ii,EEG), chanIdx, 'uni', false);
+        labels = arrayfun(@(ii) nl_spectral_common('chan_label', ii,EEG), chanIdx, 'uni', false);
     end
 end
 
@@ -151,8 +151,8 @@ if ExportData
             sheet = [sheet ; [ {labels{r}}, num2cell(C(r,:)) ]]; %#ok<AGROW>
         end
     end
-    base = strip_ext(EEG.filename);
-    tag  = iff(AverageChannelsCheck, avg_label(chanIdx), sprintf('Chans_%s', strjoin(string(chanIdx),'_')));
+    base = nl_spectral_common('strip_ext', EEG.filename);
+    tag  = nl_spectral_common('iff', AverageChannelsCheck, nl_spectral_common('avg_label', chanIdx), sprintf('Chans_%s', strjoin(string(chanIdx),'_')));
     fname = sprintf('%s_SpectralCentroid_Freq_%s.xlsx', base, tag);
     try
         writecell(sheet, fname);
@@ -174,62 +174,8 @@ if useGUI
     com = sprintf('EEG = pop_EEG_Spectral_Centroid_Freq(EEG,%s);', vararg2str(regions));
 else
     com = sprintf('EEG = pop_EEG_Spectral_Centroid_Freq(EEG,%s,%d,%d,%g,%g,1);', ...
-          coi_for_history(COIraw), AverageChannelsCheck~=0, ExportData~=0, ...
+          nl_spectral_common('coi_for_history', COIraw), AverageChannelsCheck~=0, ExportData~=0, ...
           Frames2buffer, OverlapFrames);
 end
 end
 
-% ---------------- helpers ----------------
-function idx = resolve_coi(COIraw, EEG)
-if isnumeric(COIraw), idx = COIraw(:).'; return; end
-if iscell(COIraw), idx = labels2idx(string(COIraw(:)), EEG); return; end
-s = string(COIraw); s = strrep(s, ',', ' '); parts = strtrim(split(strtrim(s)));
-idx = [];
-for i = 1:numel(parts)
-    tok = parts{i}; if isempty(tok), continue; end
-    r = regexp(tok, '^(\d+)\s*[-:]\s*(\d+)$', 'tokens','once');
-    if ~isempty(r)
-        a = str2double(r{1}); b = str2double(r{2});
-        idx = [idx, a:sign(b-a):b]; %#ok<AGROW>
-        continue;
-    end
-    v = str2double(tok);
-    if ~isnan(v), idx = [idx, v]; continue; end %#ok<AGROW>
-    idx = [idx, labels2idx(string(tok), EEG)]; %#ok<AGROW>
-end
-idx = unique(idx, 'stable');
-end
-
-function ii = labels2idx(lbls, EEG)
-if ~isfield(EEG,'chanlocs') || isempty(EEG.chanlocs)
-    error('Channel labels cannot be resolved (EEG.chanlocs empty).');
-end
-allLabs = string({EEG.chanlocs.labels});
-ii = zeros(1,0);
-for L = lbls(:).'
-    hit = find(strcmpi(allLabs, L), 1);
-    if isempty(hit), error('Channel label "%s" not found.', L); end
-    ii(end+1) = hit; %#ok<AGROW>
-end
-end
-
-function s = strip_ext(fn), [~, s, ~] = fileparts(fn); end
-function lab = chan_label(idx, EEG)
-if isfield(EEG,'chanlocs') && numel(EEG.chanlocs) >= idx && ~isempty(EEG.chanlocs(idx).labels)
-    lab = char(EEG.chanlocs(idx).labels);
-else
-    lab = sprintf('Chan_%d', idx);
-end
-end
-function s = coi_for_history(COIraw)
-if isnumeric(COIraw)
-    s = mat2str(COIraw);
-elseif iscell(COIraw)
-    q = cellfun(@(x) ['''' char(x) ''''], COIraw, 'uni', false);
-    s = ['{' strjoin(q,' ') '}'];
-else
-    s = ['''' char(string(COIraw)) ''''];
-end
-end
-function y = iff(c,a,b), if c, y = a; else, y = b; end, end
-function lab = avg_label(chanIdx), lab = sprintf('AvgChans_%s', strjoin(string(chanIdx),'_')); end

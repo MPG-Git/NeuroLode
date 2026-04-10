@@ -37,7 +37,15 @@
 % THE POSSIBILITY OF SUCH DAMAGE.
 
 function pop_SaveNopen(gca,gco)    
+if nargin < 1 || isempty(gca) || ~ishandle(gca)
+    warning('AutoBatch:SaveNopenInvalidHandle', 'Invalid GUI handle. Save/Open ignored.');
+    return;
+end
 userdata = get(get(gca,'Parent'),'userdata');
+if ~isstruct(userdata) || ~isfield(userdata,'Operation') || isempty(userdata.Operation)
+    warning('AutoBatch:SaveNopenMissingOperations', 'No recorded operations found. Save/Open ignored.');
+    return;
+end
 AA = get(gca,'Parent');
 AD = get(AA,'userdata');
 
@@ -60,12 +68,17 @@ NewScr = vertcat(ScriptPre,userdata.Operation,ScriptPost);
 t = datestr(now, 'mm_dd_yyyy_HHMM');
 t = string(t);
 t = t(1,1);
-temp =  strcat(pwd,'\AutoBatchScript_',t);
+temp =  fullfile(pwd, ['AutoBatchScript_' char(t)]);
 mkdir(temp);
 cd(temp);
 mkdir('0_Pre');
 mkdir('0_Post');
-fileID  = fopen(strcat(pwd,'\AutoBatchScript_',t,'.m'), 'w+');
+scriptPath = fullfile(pwd, ['AutoBatchScript_' char(t) '.m']);
+fileID  = fopen(scriptPath, 'w+');
+if fileID < 0
+    warning('AutoBatch:SaveNopenFileError', 'Unable to open script file for writing: %s', scriptPath);
+    return;
+end
 for i=1:size(NewScr,1)
     fprintf(fileID,'%s\n',NewScr{i,1});
     if i == (size(NewScr,1)-1)
@@ -73,10 +86,12 @@ for i=1:size(NewScr,1)
     end
 end
 fclose(fileID);
-userdata.NewScr = strcat(pwd,'\AutoBatchScript_',t,'.m');
+userdata.NewScr = scriptPath;
 set(get(gca,'Parent'), 'userdata', userdata);
 AA = get(gca,'Parent');
 AD = get(AA,'userdata');
 close;
-edit(AD.NewScr);
+if isfield(AD,'NewScr') && ~isempty(AD.NewScr)
+    edit(AD.NewScr);
+end
     

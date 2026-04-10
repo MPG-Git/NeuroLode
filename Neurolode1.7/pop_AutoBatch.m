@@ -16,7 +16,11 @@ com = '';
 
 % ---------- Handle inputs safely ----------
 if nargin < 1 || isempty(EEG)
-    EEG = evalin('base','EEG'); % best-effort for interactive use
+    try
+        EEG = evalin('base','EEG'); % best-effort for interactive use
+    catch
+        error('pop_AutoBatch: EEG input is required (or base workspace EEG must exist).');
+    end
 end
 haveRecordFlag = (nargin >= 2) && ~isempty(Record);
 
@@ -36,6 +40,7 @@ New_EEGH      = [];
 if haveRecordFlag && ~isempty(hFig) && isvalid(hFig)
     % We just clicked "Stop Recording"; pull userdata set earlier.
     userdata = get(hFig, 'userdata');
+    if isempty(userdata) || ~isstruct(userdata), userdata = struct; end
     if isfield(userdata,'Starting_EEGH') && ~isempty(userdata.Starting_EEGH)
         Starting_EEGH = userdata.Starting_EEGH;
     end
