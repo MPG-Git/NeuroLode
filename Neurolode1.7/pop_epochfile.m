@@ -1,8 +1,11 @@
 function [EEG, com] = pop_epochfile(EEG, TimeBased, StimCodes, Preonset, Postonset, BaselineCorrectStart, BaselineCorrectEnd, GUIOnOff)
-% [EEG, com] = pop_epochfile(EEG, TimeBased, StimCodes, Preonset, Postonset, BaselineCorrectStart, BaselineCorrectEnd, GUIOnOff)
-% Bundle of pop_epoch / eeg_regepochs (+ optional baseline correction).
+% pop_epochfile  Wrapper for pop_epoch / eeg_regepochs (+ optional baseline).
 %
-% Inputs (programmatic):
+% Usage:
+%   >> [EEG, com] = pop_epochfile(EEG); % GUI mode
+%   >> [EEG, com] = pop_epochfile(EEG, 0, {'S10'}, -200, 800, -200, 0, 1);
+%
+% Inputs (programmatic mode):
 %   TimeBased             - scalar (ms). If >0, create fixed-length epochs every TimeBased ms (continuous data).
 %   StimCodes             - event codes to epoch around: string like '10 12', numeric array, or cellstr.
 %   Preonset, Postonset   - ms relative to event onset (negative/positive).
@@ -17,9 +20,7 @@ function [EEG, com] = pop_epochfile(EEG, TimeBased, StimCodes, Preonset, Postons
 % Author: Matthew Phillip Gunn (refreshed 2025-08-13)
 
 com = '';
-if nargin < 1 || isempty(EEG)
-    error('pop_epochfile: EEG dataset is required.');
-end
+neurolode_preproc_common('validate_eeg_input', EEG, 'pop_epochfile');
 
 % ----------------------------
 % GUI mode if args not provided or GUIOnOff not set
@@ -104,12 +105,11 @@ else
 end
 
 % Validate numeric fields
-numchk = @(x, name) assert(isnumeric(x) && isscalar(x) && isfinite(x), 'pop_epochfile: %s must be a finite scalar.', name);
-if ~isempty(TimeBased),           numchk(TimeBased, 'TimeBased (ms)'); end
-if ~isempty(Preonset),            numchk(Preonset, 'Preonset (ms)'); end
-if ~isempty(Postonset),           numchk(Postonset, 'Postonset (ms)'); end
-if ~isempty(BaselineCorrectStart),numchk(BaselineCorrectStart, 'BaselineCorrectStart (ms)'); end
-if ~isempty(BaselineCorrectEnd),  numchk(BaselineCorrectEnd, 'BaselineCorrectEnd (ms)'); end
+if ~isempty(TimeBased),            neurolode_preproc_common('require_finite_scalar', TimeBased, 'TimeBased (ms)', 'pop_epochfile'); end
+if ~isempty(Preonset),             neurolode_preproc_common('require_finite_scalar', Preonset, 'Preonset (ms)', 'pop_epochfile'); end
+if ~isempty(Postonset),            neurolode_preproc_common('require_finite_scalar', Postonset, 'Postonset (ms)', 'pop_epochfile'); end
+if ~isempty(BaselineCorrectStart), neurolode_preproc_common('require_finite_scalar', BaselineCorrectStart, 'BaselineCorrectStart (ms)', 'pop_epochfile'); end
+if ~isempty(BaselineCorrectEnd),   neurolode_preproc_common('require_finite_scalar', BaselineCorrectEnd, 'BaselineCorrectEnd (ms)', 'pop_epochfile'); end
 
 % ----------------------------
 % Execute
@@ -194,7 +194,7 @@ if iscell(StimCodes)
         t = '{}';
         return;
     end
-    if isnumeric([StimCodes{:}])
+    if all(cellfun(@isnumeric, StimCodes))
         t = ['{' strjoin(arrayfun(@(x) num2str(x{1}), StimCodes, 'uni', false), ' ') '}'];
     else
         % quote strings

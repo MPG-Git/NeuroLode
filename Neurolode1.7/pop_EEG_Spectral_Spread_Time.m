@@ -53,7 +53,7 @@ if isempty(fs) || ~isfinite(fs) || fs <= 0
 end
 
 % ---------- resolve channels ----------
-chanIdx = resolve_coi(COIraw, EEG);
+chanIdx = nl_spectral_common('resolve_coi', COIraw, EEG);
 if isempty(chanIdx), error('No valid channels resolved from "%s".', string(COIraw)); end
 
 % ---------- prepare data (chan x time) ----------
@@ -90,7 +90,7 @@ else
         C = mean(C,1,'omitnan');
         labels = { avg_or_first_label(chanIdx, EEG, 1) };
     else
-        labels = arrayfun(@(ii) chan_label(ii,EEG), chanIdx, 'uni', false);
+        labels = arrayfun(@(ii) nl_spectral_common('chan_label', ii,EEG), chanIdx, 'uni', false);
     end
 end
 
@@ -121,7 +121,7 @@ if nargin >= 4 && ~isempty(ExportData) && ExportData
             sheet = [sheet ; [ {labels{r}}, num2cell(C(r,:)) ]]; %#ok<AGROW>
         end
     end
-    base = strip_ext(EEG.filename);
+    base = nl_spectral_common('strip_ext', EEG.filename);
     tag  = export_tag(chanIdx, EEG, AverageChannelsCheck);
     fname = sprintf('%s_SpectralSpread_Time_%s.xlsx', base, tag);
     if ~try_writecell(sheet, fname)
@@ -139,60 +139,11 @@ if useGUI
     com = sprintf('EEG = pop_EEG_Spectral_Spread_Time(EEG,%s);', vararg2str(regions));
 else
     com = sprintf('EEG = pop_EEG_Spectral_Spread_Time(EEG,%s,%d,%d,1);', ...
-        coi_for_history(COIraw), AverageChannelsCheck~=0, ExportData~=0);
+        nl_spectral_common('coi_for_history', COIraw), AverageChannelsCheck~=0, ExportData~=0);
 end
 end
 
 % ================= helpers =================
-function idx = resolve_coi(COIraw, EEG)
-% Accept numeric, cellstr of labels, or string with ranges/lists and labels.
-if isnumeric(COIraw)
-    idx = unique(COIraw(:).','stable'); return;
-end
-if iscell(COIraw)
-    idx = labels2idx(string(COIraw(:)), EEG); return;
-end
-s = string(COIraw); s = strrep(s, ',', ' ');
-parts = strtrim(split(strtrim(s)));
-idx = [];
-for i = 1:numel(parts)
-    tok = parts{i}; if tok==""; continue; end
-    r = regexp(tok, '^(\d+)\s*[-:]\s*(\d+)$', 'tokens','once');
-    if ~isempty(r)
-        a = str2double(r{1}); b = str2double(r{2});
-        idx = [idx, a:sign(b-a):b]; %#ok<AGROW>
-        continue;
-    end
-    v = str2double(tok);
-    if ~isnan(v)
-        idx = [idx, v]; %#ok<AGROW>
-    else
-        idx = [idx, labels2idx(tok, EEG)]; %#ok<AGROW>
-    end
-end
-idx = unique(idx, 'stable');
-end
-
-function ii = labels2idx(lbls, EEG)
-if ~isfield(EEG,'chanlocs') || isempty(EEG.chanlocs)
-    error('Channel labels cannot be resolved (EEG.chanlocs empty).');
-end
-allLabs = string({EEG.chanlocs.labels});
-ii = zeros(1,0);
-for L = lbls(:).'
-    hit = find(strcmpi(allLabs, L), 1);
-    if isempty(hit), error('Channel label "%s" not found.', L); end
-    ii(end+1) = hit; %#ok<AGROW>
-end
-end
-
-function s = chan_label(ii, EEG)
-if isfield(EEG,'chanlocs') && ~isempty(EEG.chanlocs) && ii>=1 && ii<=numel(EEG.chanlocs)
-    lab = EEG.chanlocs(ii).labels; if ~isempty(lab), s = char(lab); return; end
-end
-s = sprintf('Chan_%d', ii);
-end
-
 function s = avg_or_first_label(idx, EEG, avgFlag)
 if avgFlag
     if isfield(EEG,'chanlocs') && ~isempty(EEG.chanlocs)
@@ -202,7 +153,7 @@ if avgFlag
     end
     s = sprintf('Avg(Chans_%s)', strjoin(string(idx),'_'));
 else
-    s = chan_label(idx(1), EEG);
+    s = nl_spectral_common('chan_label', idx(1), EEG);
 end
 end
 
@@ -228,20 +179,5 @@ try
     end
 catch
     tf = false;
-end
-end
-
-function s = strip_ext(fn)
-d = find(fn=='.',1,'last');
-if isempty(d), s = fn; else, s = fn(1:d-1); end
-end
-
-function s = coi_for_history(COIraw)
-if isnumeric(COIraw)
-    s = mat2str(COIraw);
-elseif iscell(COIraw)
-    s = ['{' strjoin(string(COIraw), ',') '}'];
-else
-    s = ['''' char(string(COIraw)) ''''];
 end
 end

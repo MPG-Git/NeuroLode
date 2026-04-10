@@ -9,8 +9,20 @@ function pop_PrintFigure(EEG, gca)
 %     close all
 % end
 
-
+if nargin < 2 || isempty(gca) || ~ishandle(gca)
+    warning('AutoBatch:PrintFigureInvalidHandle', 'Invalid GUI handle. Print helper ignored.');
+    return;
+end
 userdata = get(get(gca,'Parent'),'userdata');
+if isempty(userdata) || ~isstruct(userdata)
+    warning('AutoBatch:PrintFigureMissingState', 'No AutoBatch state found. Print helper ignored.');
+    return;
+end
+if ~isfield(userdata,'CurrOper')
+    userdata.CurrOper = '';
+end
+CurrOper = userdata.CurrOper;
+Ti = 'AutoBatch Figure Helper';
 
 uilist0 = {{ 'Style', 'text', 'string', string(Ti), 'fontweight', 'bold'  }};
 %uilist0 =  { 'Style', 'test', 'string', 'Channel','fontweight', 'bold' } 
@@ -33,6 +45,7 @@ uilist15 =  { 'Style', 'pushbutton', 'string', 'Component ERPs, Sum/Compare comp
 
 
 uilist16   = {{ 'Style', 'text', 'string', 'OR, add a generic save figure function that will save each file with filename', 'fontweight', 'bold'  }};
+uilist17   = {{ 'Style', 'edit', 'string', CurrOper }};
 uilist18   = {{ 'Style', 'text', 'string', 'This option is good if you have a figure function already in the AutoBatchGUI', 'fontweight', 'bold'  }};
 uilist19   = {{ 'Style', 'checkbox', 'string', 'Add genetric Figure save', 'value', 0, 'fontweight', 'bold'}};
 
@@ -43,14 +56,13 @@ userdata.CurrOper = CurrOper;
 [results userdata returnmode] = inputgui('geometry', geometry, 'uilist', uilist0s, 'helpcom','pophelp(''pop_chanedit'');', 'title', Ti, 'userdata', userdata);
 
 if results{1,2} == 1
-    OriOper = userdata.CurrOper;
+    OriOper = CurrOper;
     NewOper = results{1,1};
     userdata = get(get(gca,'Parent'),'userdata');
     [idxC, ~] = find(contains(string(userdata.Operation),OriOper));
     userdata.Operation{idxC,1} = NewOper;
     set(get(gca,'Parent'), 'userdata', userdata);
 end
-
 
 
 

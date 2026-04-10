@@ -6,7 +6,14 @@ function pop_functionsettings(gca_in, gco_in)
 
 % Fetch UI state
 % Author: Matthew Phillip Gunn
-ud = get(get(gca_in,'Parent'),'userdata');
+if nargin < 2 || isempty(gca_in) || isempty(gco_in) || ~ishandle(gca_in) || ~ishandle(gco_in)
+    warning('AutoBatch: Invalid handles passed to pop_functionsettings.'); return;
+end
+parentFig = get(gca_in,'Parent');
+if isempty(parentFig) || ~ishandle(parentFig)
+    warning('AutoBatch: No parent figure found for function settings.'); return;
+end
+ud = get(parentFig,'userdata');
 if isempty(ud) || ~isfield(ud,'OrderName') || ~isfield(ud,'OrderNum') || ~isfield(ud,'Operation')
     warning('AutoBatch: No userdata found on parent figure.'); return;
 end
@@ -138,10 +145,10 @@ if saveFlag
         return;
     end
     newOp = char(newOp);
-    ud = get(get(gca_in,'Parent'),'userdata');    % re-fetch in case it changed
+    ud = get(parentFig,'userdata');    % re-fetch in case it changed
     if opIdx>=1 && opIdx<=numel(ud.Operation)
         ud.Operation{opIdx,1} = newOp;
-        set(get(gca_in,'Parent'),'userdata', ud);
+        set(parentFig,'userdata', ud);
     else
         warning('AutoBatch: Operation index vanished; unable to save changes.');
     end

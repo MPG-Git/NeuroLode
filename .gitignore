@@ -1,0 +1,40 @@
+# MATLAB / EEGLAB artifacts
+*.asv
+*.autosave
+*.m~
+*.mex*
+*.mlx~
+
+# MATLAB data + workspace files
+*.mat
+*.fig
+*.slx
+*.mdl
+*.mexw64
+*.mexmaci64
+*.mexa64
+
+# EEGLAB and analysis outputs
+*.set
+*.fdt
+*.ica
+*.study
+*.dats
+*.xlsx
+*.csv
+*.txt
+*.dat
+*.asc
+
+# Batch and report artifacts
+*.log
+*.tmp
+*.bak
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+
+# Keep quarantined legacy backups tracked
+!legacy/
+!legacy/*.asv

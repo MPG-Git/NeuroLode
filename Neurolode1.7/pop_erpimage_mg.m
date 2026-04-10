@@ -1,4 +1,6 @@
 % POP_ERPIMAGE - draw an ERP-image plot of a given EEG channel or independent
+% STATUS: Supported ERP-image GUI entrypoint in Neurolode main menu.
+% NOTE: This file is the shipping user-facing ERP-image path.
 %                  component. Uses a pop-up window if less than three (or four
 %                  in one condition) input arguments are supplied. Calls ERPIMAGE.
 %                  For further details see >> help erpimage
@@ -1022,4 +1024,3 @@ for i = 1:numel(uilist)
         end
     end
 end
-

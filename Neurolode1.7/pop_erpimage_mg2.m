@@ -1,4 +1,6 @@
 % POP_ERPIMAGE - draw an ERP-image plot of a given EEG channel or independent
+% STATUS: Legacy/prototype variant retained for reference.
+% NOTE: Not the supported Neurolode ERP-image entrypoint (use pop_erpimage_mg.m).
 %                  component. Uses a pop-up window if less than three (or four 
 %                  in one condition) input arguments are supplied. Calls ERPIMAGE. 
 %                  For further details see >> help erpimage
@@ -767,4 +769,3 @@ function optStr = optionsToString(optCell)
             optStr = [optStr, sprintf(', ''%s'', %s', optCell{i}, mat2str(optCell{i+1}))];
         end
     end
-

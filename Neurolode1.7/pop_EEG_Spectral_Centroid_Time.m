@@ -55,7 +55,7 @@ else
 end
 
 % ---------- Resolve channel indices ----------
-chanIdx = resolve_coi(COIraw, EEG);   % supports ranges, numbers, and labels
+chanIdx = nl_spectral_common('resolve_coi', COIraw, EEG);   % supports ranges, numbers, and labels
 if isempty(chanIdx)
     error('No valid channels resolved from input "%s".', string(COIraw));
 end
@@ -88,7 +88,7 @@ if size(X,1) == 1
     [cent, tSec] = spectralCentroid(double(X(:)), fs, 'Window', win, 'OverlapLength', overlap);
     C = cent(:).';                           % 1 x F
     T = tSec(:).';                           % 1 x F
-    labelList = { iff(AverageChannelsCheck, avgLabel, chan_label(chanIdx(1), EEG)) };
+    labelList = { nl_spectral_common('iff', AverageChannelsCheck, avgLabel, nl_spectral_common('chan_label', chanIdx(1), EEG)) };
 else
     nC = size(X,1);
     C = [];
@@ -111,7 +111,7 @@ else
         C = mean(C,1,'omitnan');
         labelList = {avgLabel};
     else
-        labelList = arrayfun(@(ii) chan_label(ii,EEG), chanIdx, 'uni', false);
+        labelList = arrayfun(@(ii) nl_spectral_common('chan_label', ii,EEG), chanIdx, 'uni', false);
     end
 end
 
@@ -129,7 +129,7 @@ if ExportData
     % Header: first cell, then time stamps (seconds)
     header = [ {'Channel_or_Group'}, num2cell(T) ];
     if isvector(C)
-        rows = [ { iff(AverageChannelsCheck, avgLabel, labelList{1}) }, num2cell(C) ];
+        rows = [ { nl_spectral_common('iff', AverageChannelsCheck, avgLabel, labelList{1}) }, num2cell(C) ];
         sheet = [ header ; rows ];
     else
         sheet = header;
@@ -138,8 +138,8 @@ if ExportData
         end
     end
 
-    base = strip_ext(EEG.filename);
-    tag  = iff(AverageChannelsCheck, avgLabel, sprintf('Chans_%s', strjoin(string(chanIdx),'_')));
+    base = nl_spectral_common('strip_ext', EEG.filename);
+    tag  = nl_spectral_common('iff', AverageChannelsCheck, avgLabel, sprintf('Chans_%s', strjoin(string(chanIdx),'_')));
     fname = sprintf('%s_SpectralCentroid_Time_%s.xlsx', base, tag);
 
     try
@@ -161,85 +161,8 @@ if useGUI
     com = sprintf('EEG = pop_EEG_Spectral_Centroid_Time(EEG,%s);', vararg2str(regions));
 else
     com = sprintf('EEG = pop_EEG_Spectral_Centroid_Time(EEG,%s,%d,%d,1);', ...
-        coi_for_history(COIraw), AverageChannelsCheck~=0, ExportData~=0);
+        nl_spectral_common('coi_for_history', COIraw), AverageChannelsCheck~=0, ExportData~=0);
 end
 
 end % === main ===
 
-% ---------------- helpers ----------------
-function idx = resolve_coi(COIraw, EEG)
-% Accept numbers, ranges, and/or labels
-if isnumeric(COIraw)
-    idx = COIraw(:).';
-    return;
-end
-if iscell(COIraw)
-    idx = labels2idx(string(COIraw(:)), EEG);
-    return;
-end
-s = string(COIraw);
-% split on spaces/commas
-s = strrep(s, ',', ' ');
-parts = strtrim(split(strtrim(s)));
-idx = [];
-for i = 1:numel(parts)
-    tok = parts{i};
-    if isempty(tok), continue; end
-    % range?
-    r = regexp(tok, '^(\d+)\s*[-:]\s*(\d+)$', 'tokens', 'once');
-    if ~isempty(r)
-        a = str2double(r{1}); b = str2double(r{2});
-        idx = [idx, a:sign(b-a):b]; %#ok<AGROW>
-        continue;
-    end
-    % numeric?
-    v = str2double(tok);
-    if ~isnan(v)
-        idx = [idx, v]; %#ok<AGROW>
-        continue;
-    end
-    % label
-    idx = [idx, labels2idx(string(tok), EEG)]; %#ok<AGROW>
-end
-idx = unique(idx, 'stable');
-end
-
-function ii = labels2idx(lbls, EEG)
-if ~isfield(EEG,'chanlocs') || isempty(EEG.chanlocs)
-    error('Channel labels cannot be resolved: EEG.chanlocs is empty.');
-end
-allLabs = string({EEG.chanlocs.labels});
-ii = zeros(1,0);
-for L = lbls(:).'
-    hit = find(strcmpi(allLabs, L), 1);
-    if isempty(hit), error('Channel label "%s" not found.', L); end
-    ii(end+1) = hit; %#ok<AGROW>
-end
-end
-
-function lab = chan_label(idx, EEG)
-if isfield(EEG,'chanlocs') && numel(EEG.chanlocs) >= idx && ~isempty(EEG.chanlocs(idx).labels)
-    lab = char(EEG.chanlocs(idx).labels);
-else
-    lab = sprintf('Chan_%d', idx);
-end
-end
-
-function s = coi_for_history(COIraw)
-if isnumeric(COIraw)
-    s = mat2str(COIraw);
-elseif iscell(COIraw)
-    q = cellfun(@(x) ['''' char(x) ''''], COIraw, 'uni', false);
-    s = ['{' strjoin(q,' ') '}'];
-else
-    s = ['''' char(string(COIraw)) ''''];
-end
-end
-
-function s = strip_ext(fn)
-[~, s, ~] = fileparts(fn);
-end
-
-function y = iff(c,a,b)
-if c, y = a; else, y = b; end
-end
