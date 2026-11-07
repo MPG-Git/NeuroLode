@@ -146,3 +146,35 @@ Legacy/compatibility ERP-image files and support status are documented here:
 - [`docs/LEGACY_FILES.md`](docs/LEGACY_FILES.md)
 
 Neurolode keeps compatibility paths where possible, but the primary supported plugin route remains `eegplugin_Neurolode.m`.
+## Installation and readiness checks
+
+Copy the **`Neurolode1.7` folder** into `eeglab/plugins/` and restart EEGLAB.
+The file `eegplugin_Neurolode.m` must be directly inside that folder; do not
+copy the entire repository as an extra nested plugin directory. Keep only one
+installed NeuroLode version. The `Neurolode` menu should appear once.
+
+Core exports and preprocessing require MATLAB and EEGLAB. The spectral
+commands additionally require **Audio Toolbox** and **Signal Processing
+Toolbox**. The current runtime checks use MATLAB R2023b and EEGLAB 2024.2.
+Excel exports use MATLAB's `writecell`; Microsoft Excel is not required.
+
+```matlab
+eeglab('nogui');
+addpath('/path/to/NeuroLode/tests');
+run_neurolode_smoke_tests;
+results = runtests('/path/to/NeuroLode/tests/test_runtime.m');
+assertSuccess(results);
+```
+
+The runtime suite checks menu creation/idempotence, all 12 spectral commands
+with separate, averaged and single channels, history replay, four export
+formats in all four averaging modes, sLORETA output, and preserved event
+positions when epochs are concatenated. Concatenation joins retained epochs;
+it does not recover the original continuous recording or missing time gaps.
+
+EEGLAB plugin discovery was verified in an isolated installation. Manual
+menu/dialog smoke tests remain required before release (see `AGENTS.md`);
+the automated checks do not certify every legacy utility or third-party
+integration.
+
+---

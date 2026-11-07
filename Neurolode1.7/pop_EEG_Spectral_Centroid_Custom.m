@@ -106,8 +106,9 @@ win = hamming(winSamp, 'periodic');
 fmin = HzRange(1); fmax = HzRange(2);
 
 if size(X,1) == 1
-    [cent, tSec] = spectralCentroid(double(X(:)), fs, ...
+    cent = spectralCentroid(double(X(:)), fs, ...
         'Window', win, 'OverlapLength', ovlSamp, 'Range', [fmin fmax]);
+    tSec = ((0:numel(cent)-1)*(winSamp-ovlSamp) + winSamp/2)/fs;
     C = cent(:).';   T = tSec(:).';
     labels = { nl_spectral_common('iff', AverageChannelsCheck, nl_spectral_common('avg_label', chanIdx), nl_spectral_common('chan_label', chanIdx(1), EEG)) };
 else
@@ -115,8 +116,9 @@ else
     C = [];
     for k = 1:nC
         if k == 1
-            [cent, tSec] = spectralCentroid(double(X(k,:)).', fs, ...
+            cent = spectralCentroid(double(X(k,:)).', fs, ...
                 'Window', win, 'OverlapLength', ovlSamp, 'Range', [fmin fmax]);
+            tSec = ((0:numel(cent)-1)*(winSamp-ovlSamp) + winSamp/2)/fs;
             T = tSec(:).'; C = cent(:).';
         else
             cent = spectralCentroid(double(X(k,:)).', fs, ...

@@ -101,7 +101,7 @@ if size(X,1) == 1
     for f = 1:nFrames
         seg = double(X(frameIdx(:,f)));
         [p, cf] = poctave(seg, fs);              % power per octave band & center freqs
-        c(f) = spectralKurtosis(p(:).', cf(:).');% kurtosis across octave centers
+        c(f) = spectralKurtosis(p(:), cf(:));% kurtosis across octave centers
     end
     C = c;
     labels = { nl_spectral_common('iff', AverageChannelsCheck, nl_spectral_common('avg_label', chanIdx), nl_spectral_common('chan_label', chanIdx(1), EEG)) };
@@ -113,7 +113,7 @@ else
         for f = 1:nFrames
             seg = double(xk(frameIdx(:,f)));
             [p, cf] = poctave(seg, fs);
-            C(k,f) = spectralKurtosis(p(:).', cf(:).');
+            C(k,f) = spectralKurtosis(p(:), cf(:));
         end
     end
     if AverageChannelsCheck

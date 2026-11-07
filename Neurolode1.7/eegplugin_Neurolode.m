@@ -38,6 +38,7 @@ end
     function cb = mkcb(popcall)
         % popcall example: 'pop_erpimage_mg(EEG)'
         body = [ ...
+            'LASTCOM = '''';' ...
             '[EEG, com] = ' popcall ';' ...
             'if ~isempty(com),' ...
                 'EEG = eegh(com, EEG);' ...
@@ -52,7 +53,7 @@ end
     function add_item(parent, label, popcall, varargin)
         % Extract function name before '(' to test existence
         fn = regexp(popcall, '^\s*([a-zA-Z0-9_]+)\s*\(', 'tokens','once');
-        fn = iff(~isempty(fn), fn{1}, '');
+        if isempty(fn), fn = ''; else, fn = fn{1}; end
         enabledFlag = 'on';
         if isempty(fn) || exist(fn,'file')~=2 && exist(fn,'builtin')~=5
             enabledFlag = 'off'; % keep visible but disabled so users see the feature list
@@ -69,7 +70,7 @@ end
 add_item(ParentMenu, 'ERP Image Batch Tool',        'pop_erpimage_mg(EEG)');
 
 add_item(ParentMenu, 'AutoBatch', ...
-    '[EEG, com] = pop_AutoBatch(EEG);');
+    'pop_AutoBatch(EEG)');
 
 % -------------------------
 % Common Commands

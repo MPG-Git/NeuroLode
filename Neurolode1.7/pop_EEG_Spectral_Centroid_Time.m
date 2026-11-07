@@ -85,7 +85,8 @@ win = hamming(winSamp, 'periodic');
 % ---------- Compute centroid traces ----------
 % Audio Toolbox: spectralCentroid(x, fs, 'Window',win, 'OverlapLength',overlap)
 if size(X,1) == 1
-    [cent, tSec] = spectralCentroid(double(X(:)), fs, 'Window', win, 'OverlapLength', overlap);
+    cent = spectralCentroid(double(X(:)), fs, 'Window', win, 'OverlapLength', overlap);
+    tSec = ((0:numel(cent)-1)*(winSamp-overlap)+winSamp/2)/fs;
     C = cent(:).';                           % 1 x F
     T = tSec(:).';                           % 1 x F
     labelList = { nl_spectral_common('iff', AverageChannelsCheck, avgLabel, nl_spectral_common('chan_label', chanIdx(1), EEG)) };
@@ -94,7 +95,8 @@ else
     C = [];
     for k = 1:nC
         if k == 1
-            [cent, tSec] = spectralCentroid(double(X(k,:)).', fs, 'Window', win, 'OverlapLength', overlap);
+            cent = spectralCentroid(double(X(k,:)).', fs, 'Window', win, 'OverlapLength', overlap);
+            tSec = ((0:numel(cent)-1)*(winSamp-overlap)+winSamp/2)/fs;
             T = tSec(:).';
             C = cent(:).';
         else
