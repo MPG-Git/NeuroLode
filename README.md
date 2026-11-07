@@ -178,3 +178,10 @@ the automated checks do not certify every legacy utility or third-party
 integration.
 
 ---
+
+## Downloadable synthetic example
+
+[Run the bundled synthetic example](Neurolode1.7/examples/synthetic/README.md) to check your setup against
+included reference outputs. It contains actual input files, a one-command runner,
+expected tables/plots, and numerical comparisons that report PASS or a mismatch.
+The example guide links to the ZIP of this review branch, including the readiness fixes.
