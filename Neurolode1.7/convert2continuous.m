@@ -12,7 +12,7 @@ function [EEG, com] = convert2continuous(EEG)
 %   com : EEGLAB history command string.
 %
 % Notes:
-% - Event latencies are converted from (epoch, within-epoch) to continuous samples.
+% - EEGLAB event latencies already index the concatenated epoch samples.
 % - Removes EEG.epoch and sets EEG.trials = 1.
 %
 % Author: Matthew Phillip Gunn (refreshed 2025-08-13)
@@ -43,18 +43,11 @@ if isfield(EEG,'icaact') && ~isempty(EEG.icaact) ...
     EEG.icaact = reshape(EEG.icaact, size(EEG.icaact,1), nPnts * nEp);
 end
 
-% --- Fix events: convert epoch-based latencies to continuous samples ---
+% --- Keep EEGLAB event sample positions; remove epoch membership ---
 if isfield(EEG,'event') && ~isempty(EEG.event)
-    % In epoched data, event.latency is in samples from epoch start,
-    % and event.epoch gives epoch index (1-based).
+    % EEG.event.latency is already in concatenated samples, NOT relative to
+    % each epoch. Adding an epoch offset a second time corrupts event timing.
     if isfield(EEG.event, 'epoch')
-        for k = 1:numel(EEG.event)
-            if isfield(EEG.event(k),'epoch') && ~isempty(EEG.event(k).epoch)
-                eIdx = EEG.event(k).epoch; % 1..nEp
-                % latency within epoch is already in samples; shift by (epoch-1)*nPnts
-                EEG.event(k).latency = EEG.event(k).latency + (eIdx - 1) * nPnts;
-            end
-        end
         % Remove epoch field after conversion
         EEG.event = rmfield(EEG.event, intersect(fieldnames(EEG.event), {'epoch'}));
     end

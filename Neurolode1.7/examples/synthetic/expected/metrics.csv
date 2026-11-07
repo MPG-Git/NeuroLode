@@ -1,0 +1,8 @@
+Metric,Value,AbsTolerance
+Channels,3,0
+Epochs,2,0
+ContinuousSamples,2000,0
+ExportMaxError,4.88498130835069e-15,1e-06
+CzMeanCentroidHz,10,0.0001
+PzMeanCentroidHz,15,0.0001
+FzMeanCentroidHz,20,0.0001

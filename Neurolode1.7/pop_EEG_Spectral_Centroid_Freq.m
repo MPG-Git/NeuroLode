@@ -103,7 +103,7 @@ if size(X,1) == 1
         % octave-band power for this frame
         [p, cf] = poctave(seg, fs);         % p: power per band (column), cf: center freqs
         % centroid over octave centers (Hz) weighted by power
-        c(f) = spectralCentroid(p(:).', cf(:).');  % returns scalar
+        c(f) = spectralCentroid(p(:), cf(:));  % rows are frequency bins
     end
     C = c;
     labels = { nl_spectral_common('iff', AverageChannelsCheck, nl_spectral_common('avg_label', chanIdx), nl_spectral_common('chan_label', chanIdx(1), EEG)) };
@@ -115,7 +115,7 @@ else
         for f = 1:nFrames
             seg = double(xk(frameIdx(:,f)));
             [p, cf] = poctave(seg, fs);
-            C(k,f) = spectralCentroid(p(:).', cf(:).');
+            C(k,f) = spectralCentroid(p(:), cf(:));
         end
     end
     if AverageChannelsCheck

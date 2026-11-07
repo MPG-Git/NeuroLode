@@ -61,17 +61,17 @@ chanSuffix = sprintf('Chans_%s', strjoin(arrayfun(@num2str, chanIdx, 'uni', fals
 
 if GA==1 && AC==1
     % mean epochs -> mean channels → 1 x pnts
-    Y = squeeze(mean(mean(X,3,'omitnan'),1,'omitnan')).';   % [1 x pnts]
+    Y = reshape(mean(mean(X,3,'omitnan'),1,'omitnan'),1,pnts);
     header = time_header(EEG, pnts, 1, 'Filename');         % single epoch header
     rowlab = sprintf('AvgChans_%s', strjoin(arrayfun(@num2str, chanIdx,'uni',false),'_'));
     dataCell = [ {compose_filename(EEG, rowlab, TS)} num2cell(Y) ];
 
 elseif GA==1 && AC==0
     % mean epochs → keep channels → nChan x pnts
-    Y = squeeze(mean(X,3,'omitnan'));                       % [nChan x pnts]
+    Y = reshape(mean(X,3,'omitnan'),nChan,pnts);
     header = time_header(EEG, pnts, 1, 'Channel#_DataSet');
     rownames = strcat(string(chanIdx),'_Chan_', strip_ext(EEG.filename));
-    dataCell = [ rownames num2cell(Y) ];
+    dataCell = [ cellstr(rownames(:)) num2cell(Y) ];
 
 elseif GA==0 && AC==1
     % mean channels → keep epochs (concat time) → 1 x (pnts*tr)
@@ -86,11 +86,11 @@ else
     if tr > 1
         Y = reshape(X, nChan, pnts*tr);                     % concat along time
     else
-        Y = squeeze(X);                                     % [nChan x pnts]
+        Y = reshape(X,nChan,pnts);
     end
     header = time_header(EEG, pnts, tr, 'Channel#_DataSet');
     rownames = strcat(string(chanIdx),'_Chan_', strip_ext(EEG.filename));
-    dataCell = [ rownames num2cell(Y) ];
+    dataCell = [ cellstr(rownames(:)) num2cell(Y) ];
 end
 
 % First row of sheet is header, then rows of data
@@ -124,10 +124,10 @@ switch ext
             fprintf(fid, '%s', string(hdr{1}));
             for i=2:numel(hdr), fprintf(fid, '\t%s', string(hdr{i})); end
             fprintf(fid, '\n');
+            fclose(fid);
             % numeric block: drop the first col (rownames) and enforce numeric
             numblock = cell2mat(sheet(2:end,2:end));
             dlmwrite(outpath, numblock, '-append','delimiter','\t','precision',9);
-            fclose(fid);
         catch ME
             warning('DAT numeric write failed (%s). Writing as tab-delimited text instead.', ME.message);
             writecell(sheet, outpath, 'Delimiter','tab');
@@ -166,7 +166,8 @@ for k=1:numel(parts)
         nums = regexp(tok,'(\d+)[-~:](\d+)','tokens','once');
         if ~isempty(nums)
             a = str2double(nums{1}); b = str2double(nums{2});
-            idx = [idx, a:sign(b-a):b]; %#ok<AGROW>
+            step = sign(b-a); if step == 0, step = 1; end
+            idx = [idx, a:step:b]; %#ok<AGROW>
             continue;
         end
     end

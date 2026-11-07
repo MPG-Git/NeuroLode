@@ -1,0 +1,7 @@
+{
+  "data/synthetic.set": "ddd456f87feb995fff48a76da66a32663969dbc488832c95791f89cfc970920d",
+  "expected/centroid.csv": "a2ec8103bdd5c57ff5199f2715b557bb5fa87c520f77460792d6af17bf7e6193",
+  "expected/epoch_average.png": "862a2af01ca4eccf695adfaa42b66f3b70ffdae006cc3534f2a8965f3afe15fa",
+  "expected/metrics.csv": "41c970bab2c9b6f9d884ba8b426090153c404374dcc4d55d5953c47bfc7ff529",
+  "expected/synthetic_Chans_1_2_3.csv": "4ff55732455cf26966581337afefc24c7aa7c23d2048d2662d533c916c751594"
+}
